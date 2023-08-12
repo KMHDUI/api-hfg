@@ -1,0 +1,37 @@
+{
+    "definition": {
+      "openapi": "3.0.0",
+      "info": {
+        "title": "HFU KMHDUI API",
+        "version": "1.0.0",
+        "description": "Collection of API for HFG KMHDUI backend",
+        "license": {
+          "name": "MIT"
+        }
+      },
+      "components": {
+        "securitySchemes": {
+          "bearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT"
+          }
+        }
+      },
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "servers": [
+        {
+            "url": "https://api-hfg.vercel.app/"
+        },
+        {
+            "url": "http://localhost:8000"
+        }
+      ]
+    },
+    "apis": ["src/routes/*", "src/dto/*"]
+  }
+  
