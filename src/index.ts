@@ -28,7 +28,7 @@ app.get("/api", (_req: Request, res: Response) => {
 });
 
 const spec: object = swaggerJSDoc(SwaggerOptions);
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(spec));
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(spec));
 
 app.use("/api/v1", userRouter);
 
