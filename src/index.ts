@@ -27,10 +27,10 @@ app.get("/api", (_req: Request, res: Response) => {
   res.send("API HFG UI");
 });
 
-const spec: object = swaggerJSDoc(SwaggerOptions);
-app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(spec));
-
 app.use("/api/v1", userRouter);
+
+const spec: object = swaggerJSDoc(SwaggerOptions);
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(spec));
 
 app.listen(port, () => {
   logger.info(`⚡️[server]: Server is running at http://localhost:${port}`);
