@@ -7,7 +7,8 @@ import logger from "./utils/logger";
 import userRouter from "./routes/user.router";
 import { initializeFirestore } from "./database/firestore";
 import swaggerJSDoc from "swagger-jsdoc";
-import SwaggerOptions from "../swagger.json";
+import swaggerOptions from "../swagger.json";
+import prodSwaggerOptions from "../swagger-prod.json";
 import swaggerUi from "swagger-ui-express";
 
 dotenv.config();
@@ -15,6 +16,7 @@ initializeFirestore();
 
 const app: Express = express();
 const port = process.env.PORT || 8000;
+const env = process.env.NODE_ENV;
 
 app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms")
@@ -29,7 +31,9 @@ app.get("/api", (_req: Request, res: Response) => {
 
 app.use("/api/v1", userRouter);
 
-const spec: object = swaggerJSDoc(SwaggerOptions);
+const spec: object = swaggerJSDoc(
+  env === "prod" || env === "dev" ? prodSwaggerOptions : swaggerOptions
+);
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(spec));
 
 app.listen(port, () => {
