@@ -30,5 +30,5 @@
       }
     ]
   },
-  "apis": ["src/routers/*", "src/dto/*"]
+  "apis": ["src/routes/*", "src/dto/*"]
 }
