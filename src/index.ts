@@ -17,6 +17,8 @@ initializeFirestore();
 const app: Express = express();
 const port = process.env.PORT || 8000;
 const env = process.env.NODE_ENV;
+const CSS_URL =
+  "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.1.0/swagger-ui.min.css";
 
 app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms")
@@ -34,7 +36,11 @@ app.use("/api/v1", userRouter);
 const spec: object = swaggerJSDoc(
   env === "prod" || env === "dev" ? prodSwaggerOptions : swaggerOptions
 );
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(spec));
+app.use(
+  "/docs",
+  swaggerUi.serve,
+  swaggerUi.setup(spec, { customCssUrl: CSS_URL })
+);
 
 app.listen(port, () => {
   logger.info(`⚡️[server]: Server is running at http://localhost:${port}`);

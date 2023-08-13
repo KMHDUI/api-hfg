@@ -4,15 +4,15 @@
     "info": {
       "title": "HFG KMHDUI API DOCS",
       "version": "1.0.0",
-      "description": "Collection of API for HFG KMHDUI backend"
+      "description": "Collection of API for HFG KMHDUI backend",
+      "license": {
+        "name": "MIT"
+      }
     },
-    "host": "api-hfg.vercel.app",
-    "basePath": "/api",
-    "schemes": ["https"],
     "components": {
       "securitySchemes": {
         "bearerAuth": {
-          "type": "https",
+          "type": "http",
           "scheme": "bearer",
           "bearerFormat": "JWT"
         }
@@ -25,6 +25,7 @@
     ],
     "servers": [
       {
+        "name": "development",
         "url": "https://api-hfg.vercel.app"
       }
     ]
