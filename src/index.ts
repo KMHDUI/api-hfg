@@ -27,11 +27,11 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.get("/api", (_req: Request, res: Response) => {
+app.get("/", (_req: Request, res: Response) => {
   res.send("API HFG UI");
 });
 
-app.use("/api/v1", userRouter);
+app.use("/api/v1/user", userRouter);
 
 const spec: object = swaggerJSDoc(
   env === "prod" || env === "dev" ? prodSwaggerOptions : swaggerOptions

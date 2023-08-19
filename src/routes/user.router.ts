@@ -1,8 +1,11 @@
 import { Router } from "express";
 import {
+  getMyProfileHandler,
   loginUserHandler,
   registerUserHandler,
+  verificationUserHandler,
 } from "../services/user.service";
+import authentication from "../middleware/authencation";
 
 /**
  * @openapi
@@ -33,7 +36,7 @@ const userRouter = Router();
  *         500:
  *           description: Internal server error.
  */
-userRouter.post("/user/login", loginUserHandler);
+userRouter.post("/login", loginUserHandler);
 
 /**
  * @openapi
@@ -56,6 +59,38 @@ userRouter.post("/user/login", loginUserHandler);
  *         500:
  *           description: Internal server error.
  */
-userRouter.post("/user/register", registerUserHandler);
+userRouter.post("/register", registerUserHandler);
+
+/**
+ * @openapi
+ * paths:
+ *   /api/v1/user/verification:
+ *     post:
+ *       tags: [User]
+ *       summary: Verify user identity.
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/VerificationUserDto'
+ *       responses:
+ *         200:
+ *           description: Verification successful
+ */
+userRouter.post("/verification", authentication, verificationUserHandler);
+
+/**
+ * @openapi
+ * paths:
+ *   /api/v1/user/profile:
+ *     get:
+ *       tags: [User]
+ *       summary: Get the user's profile.
+ *       responses:
+ *         200:
+ *           description: Successful retrieval of user profile.
+ */
+userRouter.get("/profile", authentication, getMyProfileHandler);
 
 export default userRouter;

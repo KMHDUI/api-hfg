@@ -77,3 +77,55 @@ export interface RegisterUserDto {
   status: string;
   college: string;
 }
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     VerificationUserDto:
+ *       type: object
+ *       properties:
+ *         major:
+ *           type: string
+ *           description: The major of the user.
+ *         batch:
+ *           type: number
+ *           description: The batch of the user.
+ *         bod:
+ *           type: string
+ *           format: date
+ *           description: The date of birth of the user (in ISO 8601 format).
+ *         sn:
+ *           type: string
+ *           description: The serial number of the user.
+ *         snUrl:
+ *           type: string
+ *           format: uri
+ *           description: The URL to the serial number image.
+ *         haloBelanjaUrl:
+ *           type: string
+ *           format: uri
+ *           description: The URL to the Halo Belanja image.
+ *       required:
+ *         - major
+ *         - batch
+ *         - bod
+ *         - sn
+ *         - snUrl
+ *         - haloBelanjaUrl
+ *       example:
+ *         major: "Computer Science"
+ *         batch: 2023
+ *         bod: "2000-08-15"
+ *         sn: "SN12345"
+ *         snUrl: "https://example.com/sn-image.jpg"
+ *         haloBelanjaUrl: "https://example.com/halo-belanja-image.jpg"
+ */
+export interface VerificationUserDto {
+  major: string;
+  batch: number;
+  bod: Date;
+  sn: string;
+  snUrl: string;
+  haloBelanjaUrl: string;
+}

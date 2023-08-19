@@ -3,6 +3,7 @@ import { LoginUserDto, RegisterUserDto } from "../dto/user.dto";
 import { db } from "../database/firestore";
 import bcrypt from "bcrypt";
 import generateJwtToken from "../utils/generateJwtToken";
+import { AuthRequest } from "../types/types";
 
 export const loginUserHandler = async (req: Request, res: Response) => {
   const { email, password }: LoginUserDto = req.body;
@@ -85,4 +86,70 @@ export const registerUserHandler = async (req: Request, res: Response) => {
   } catch (error: any) {
     return res.status(500).send(error.message);
   }
+};
+
+export const verificationUserHandler = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  const { major, batch, bod, sn, snUrl, haloBelanjaUrl } = req.body;
+  const userId = req.userId as string;
+
+  const userDetailDb = db.collection("user_detail");
+
+  const userDetailQuery = await userDetailDb
+    .where("user", "==", db.doc(`user/${userId}`))
+    .get();
+
+  if (userDetailQuery.empty) {
+    return res
+      .status(404)
+      .send({ message: `User details for user with id ${userId} not found` });
+  }
+
+  try {
+    userDetailDb.doc(userDetailQuery.docs[0].id).set(
+      {
+        major: major,
+        batch: batch,
+        bod: bod,
+        sn: sn,
+        snUrl: snUrl,
+        haloBelanjaUrl: haloBelanjaUrl,
+      },
+      { merge: true }
+    );
+
+    return res.status(200).send({ message: "Verification successful" });
+  } catch (error: any) {
+    return res.status(500).send({ message: error.message });
+  }
+};
+
+export const getMyProfileHandler = async (req: AuthRequest, res: Response) => {
+  const userId = req.userId as string;
+  const userDb = db.collection("user");
+  const userDetailDb = db.collection("user_detail");
+
+  const user = (await userDb.doc(userId).get()).data();
+  const userDetail = (
+    await userDetailDb.where("user", "==", db.doc(`user/${userId}`)).get()
+  ).docs[0].data();
+
+  if (!user) {
+    return res
+      .status(404)
+      .send({ message: `User with id ${userId} is not found` });
+  }
+
+  const result = {
+    fullname: user.fullname,
+    nickname: user.nickname,
+    email: user.email,
+    phone: user.phone,
+    status: user.status,
+    college: userDetail.college,
+  };
+
+  return res.status(200).send({ message: "ok", data: result });
 };
