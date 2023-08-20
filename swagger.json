@@ -25,7 +25,7 @@
     ],
     "servers": [
       {
-        "name": "local",
+        "description": "Local server (uses local data)",
         "url": "http://localhost:8000"
       }
     ]

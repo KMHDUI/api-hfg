@@ -25,8 +25,8 @@
     ],
     "servers": [
       {
-        "name": "development",
-        "url": "https://api-hfg.vercel.app"
+        "description": "Production server (uses live data)",
+        "url": "https://api-hfg-3s5y7jj3ma-as.a.run.app/"
       }
     ]
   },
