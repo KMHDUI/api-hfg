@@ -15,7 +15,7 @@
  *         - email
  *         - password
  *       example:
- *         email: user@example.com
+ *         email: john@example.com
  *         password: secret123
  */
 export interface LoginUserDto {
@@ -63,7 +63,7 @@ export interface LoginUserDto {
  *         fullname: John Doe
  *         nickname: johnd
  *         email: john@example.com
- *         phone: +1234567890
+ *         phone: "082147474931"
  *         password: secret123
  *         status: active
  *         college: University XYZ
