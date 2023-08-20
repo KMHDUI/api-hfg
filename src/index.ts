@@ -15,7 +15,7 @@ dotenv.config();
 initializeFirestore();
 
 const app: Express = express();
-const port = process.env.PORT || 8000;
+const port = process.env.NODE_PORT || 8000;
 const env = process.env.NODE_ENV;
 const CSS_URL =
   "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.1.0/swagger-ui.min.css";
