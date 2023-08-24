@@ -151,5 +151,7 @@ export const getMyProfileHandler = async (req: AuthRequest, res: Response) => {
     college: userDetail.college,
   };
 
-  return res.status(200).send({ message: "ok", data: result });
+  return res
+    .status(200)
+    .send({ message: "Successful retrieval of user profile.", data: result });
 };
