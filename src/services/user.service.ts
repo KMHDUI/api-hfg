@@ -1,5 +1,9 @@
 import { Request, Response } from "express";
-import { LoginUserDto, RegisterUserDto } from "../dto/user.dto";
+import {
+  ChangePasswordDto,
+  LoginUserDto,
+  RegisterUserDto,
+} from "../dto/user.dto";
 import { db } from "../database/firestore";
 import bcrypt from "bcrypt";
 import generateJwtToken from "../utils/generateJwtToken";
@@ -108,7 +112,7 @@ export const verificationUserHandler = async (
   }
 
   try {
-    userDetailDb.doc(userDetailQuery.docs[0].id).set(
+    await userDetailDb.doc(userDetailQuery.docs[0].id).set(
       {
         major: major,
         batch: batch,
@@ -154,4 +158,38 @@ export const getMyProfileHandler = async (req: AuthRequest, res: Response) => {
   return res
     .status(200)
     .send({ message: "Successful retrieval of user profile.", data: result });
+};
+
+export const changePasswordHandler = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  const userId = req.userId as string;
+  const { oldPassword, newPassword }: ChangePasswordDto = req.body;
+
+  const userDb = db.collection("user");
+  const user = (await userDb.doc(userId).get()).data();
+  if (!user) {
+    return res
+      .status(404)
+      .send({ message: `User with id ${userId} is not found` });
+  }
+
+  const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
+
+  if (!isPasswordMatch)
+    return res.status(400).send({ message: "Wrong password" });
+
+  try {
+    await userDb.doc(userId).set(
+      {
+        password: newPassword,
+      },
+      { merge: true }
+    );
+
+    return res.status(200).send({ message: "Password is change successfully" });
+  } catch (err: any) {
+    return res.status(500).send({ mesage: err.message });
+  }
 };

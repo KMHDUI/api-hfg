@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  changePasswordHandler,
   getMyProfileHandler,
   loginUserHandler,
   registerUserHandler,
@@ -92,5 +93,26 @@ userRouter.post("/verification", authentication, verificationUserHandler);
  *           description: Successful retrieval of user profile.
  */
 userRouter.get("/profile", authentication, getMyProfileHandler);
+
+/**
+ * @openapi
+ * paths:
+ *   /api/v1/user/change_password:
+ *     patch:
+ *       tags: [User]
+ *       summary: Change user password.
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ChangePasswordDto'
+ *       responses:
+ *         200:
+ *           description: Password changed successfully
+ *         401:
+ *           description: Unauthorized - Authentication failed
+ */
+userRouter.patch("/change_password", authentication, changePasswordHandler);
 
 export default userRouter;

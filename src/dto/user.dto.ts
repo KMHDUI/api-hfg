@@ -129,3 +129,28 @@ export interface VerificationUserDto {
   snUrl: string;
   haloBelanjaUrl: string;
 }
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     ChangePasswordDto:
+ *       type: object
+ *       properties:
+ *         oldPassword:
+ *           type: string
+ *           description: The user's old password.
+ *         newPassword:
+ *           type: string
+ *           description: The user's new password.
+ *       required:
+ *         - oldPassword
+ *         - newPassword
+ *       example:
+ *         oldPassword: "currentPassword"
+ *         newPassword: "newPassword123"
+ */
+export interface ChangePasswordDto {
+  oldPassword: string;
+  newPassword: string;
+}
