@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import {
   ChangePasswordDto,
+  ForgotPasswordDto,
   LoginUserDto,
   RegisterUserDto,
 } from "../dto/user.dto";
@@ -8,6 +9,8 @@ import { db } from "../database/firestore";
 import bcrypt from "bcrypt";
 import generateJwtToken from "../utils/generateJwtToken";
 import { AuthRequest } from "../types/types";
+import transporter from "../config/mailer";
+import generateRandomPassword from "../utils/generateRandomPassword";
 
 export const loginUserHandler = async (req: Request, res: Response) => {
   const { email, password }: LoginUserDto = req.body;
@@ -192,4 +195,61 @@ export const changePasswordHandler = async (
   } catch (err: any) {
     return res.status(500).send({ mesage: err.message });
   }
+};
+
+export const forgotPasswordHandler = async (req: Request, res: Response) => {
+  const { email }: ForgotPasswordDto = req.body;
+  const userDb = db.collection("user");
+  const user = await userDb.where("email", "==", email).get();
+
+  if (user.empty) {
+    return res
+      .status(404)
+      .send({ message: `User with email ${email} is not found` });
+  }
+
+  const userData = user.docs[0].data();
+  const from = String(process.env.EMAIL_USER);
+  const mailData = {
+    from: from,
+    to: email,
+    subject: `Change Password for HFG UI Account`,
+    html: `
+    <html>
+      <body>
+        <div style="width: 100%; display:block;">
+          <h2>Reset Password</h2>
+          <p style="font-size:16px; margin-bottom:10px">
+            <strong>Hi ${userData.nickname}!</strong><br>
+            A password change has been requested for your account. If this was you, please use the link below to reset your password<br>
+          </p>
+          <a href="/" style="display:inline-block;text-decoration:none;background:#10a37f;border-radius:3px;color:white;font-family:Helvetica,sans-serif;font-size:16px;line-height:24px;font-weight:400;padding:12px 20px 11px;margin:0px; margin-bottom:10px" target="_blank" data-saferedirecturl="/">
+            <span>Reset Password</span>        
+          </a>
+          <p style="font-size:16px;margin:0;margin-bottom:10px">
+            If you did not make this request, your email address may have been entered by mistake and you can safely disregard this email. Visit your account settings page on HFG UI to update your information.
+          </p>
+          <p style="font-size:16px;margin:0">
+            Thank you!<br>
+            The HFG UI Team
+          </p>
+        </div>
+      </body>
+    </html>`,
+  };
+
+  transporter.sendMail(mailData, async function (err: any, _info: any) {
+    if (err) {
+      return res.status(500).send({
+        success: false,
+        message: "Email failed to send",
+      });
+    } else {
+      return res.status(200).send({
+        success: true,
+        message:
+          "Password request success, check your email",
+      });
+    }
+  });
 };

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   changePasswordHandler,
+  forgotPasswordHandler,
   getMyProfileHandler,
   loginUserHandler,
   registerUserHandler,
@@ -114,5 +115,24 @@ userRouter.get("/profile", authentication, getMyProfileHandler);
  *           description: Unauthorized - Authentication failed
  */
 userRouter.patch("/change_password", authentication, changePasswordHandler);
+
+/**
+ * @openapi
+ * paths:
+ *   /api/v1/user/forgot_password:
+ *     post:
+ *       tags: [User]
+ *       summary: Request a password reset.
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ForgotPasswordDto'
+ *       responses:
+ *         200:
+ *           description: Password reset request successful
+ */
+userRouter.post("/forgot_password", forgotPasswordHandler);
 
 export default userRouter;

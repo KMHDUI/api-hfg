@@ -154,3 +154,22 @@ export interface ChangePasswordDto {
   oldPassword: string;
   newPassword: string;
 }
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     ForgotPasswordDto:
+ *       type: object
+ *       properties:
+ *         email:
+ *           type: string
+ *           description: The email of the user requesting a password reset.
+ *       required:
+ *         - email
+ *       example:
+ *         email: "user@example.com"
+ */
+export interface ForgotPasswordDto {
+  email: string;
+}
