@@ -173,3 +173,22 @@ export interface ChangePasswordDto {
 export interface ForgotPasswordDto {
   email: string;
 }
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     VerifyForgotPasswordDto:
+ *       type: object
+ *       properties:
+ *         token:
+ *           type: string
+ *           description: The token received during the password reset request.
+ *       required:
+ *         - token
+ *       example:
+ *         token: "your-reset-token"
+ */
+export interface VerifyForgotPasswordDto {
+  token: string;
+}

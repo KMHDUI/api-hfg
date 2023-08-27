@@ -6,6 +6,7 @@ import {
   loginUserHandler,
   registerUserHandler,
   verificationUserHandler,
+  verifyForgotPasswordTokenHandler,
 } from "../services/user.service";
 import authentication from "../middleware/authencation";
 
@@ -98,7 +99,7 @@ userRouter.get("/profile", authentication, getMyProfileHandler);
 /**
  * @openapi
  * paths:
- *   /api/v1/user/change_password:
+ *   /api/v1/user/change-password:
  *     patch:
  *       tags: [User]
  *       summary: Change user password.
@@ -114,12 +115,12 @@ userRouter.get("/profile", authentication, getMyProfileHandler);
  *         401:
  *           description: Unauthorized - Authentication failed
  */
-userRouter.patch("/change_password", authentication, changePasswordHandler);
+userRouter.patch("/change-password", authentication, changePasswordHandler);
 
 /**
  * @openapi
  * paths:
- *   /api/v1/user/forgot_password:
+ *   /api/v1/user/forgot-password:
  *     post:
  *       tags: [User]
  *       summary: Request a password reset.
@@ -133,6 +134,29 @@ userRouter.patch("/change_password", authentication, changePasswordHandler);
  *         200:
  *           description: Password reset request successful
  */
-userRouter.post("/forgot_password", forgotPasswordHandler);
+userRouter.post("/forgot-password", forgotPasswordHandler);
+
+/**
+ * @openapi
+ * paths:
+ *   /api/v1/user/forgot-password/verify:
+ *     post:
+ *       tags: [User]
+ *       summary: Verify a password reset token.
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/VerifyForgotPasswordDto'
+ *       responses:
+ *         200:
+ *           description: Password reset token verified successfully
+ *         400:
+ *           description: Bad request. Token is invalid.
+ *         404:
+ *           description: Token not found or expired.
+ */
+userRouter.post("/forgot-password/verify", verifyForgotPasswordTokenHandler);
 
 export default userRouter;

@@ -4,13 +4,13 @@ import {
   ForgotPasswordDto,
   LoginUserDto,
   RegisterUserDto,
+  VerifyForgotPasswordDto,
 } from "../dto/user.dto";
 import { db } from "../database/firestore";
 import bcrypt from "bcrypt";
 import generateJwtToken from "../utils/generateJwtToken";
 import { AuthRequest } from "../types/types";
 import transporter from "../config/mailer";
-import generateRandomPassword from "../utils/generateRandomPassword";
 
 export const loginUserHandler = async (req: Request, res: Response) => {
   const { email, password }: LoginUserDto = req.body;
@@ -186,7 +186,7 @@ export const changePasswordHandler = async (
   try {
     await userDb.doc(userId).set(
       {
-        password: newPassword,
+        password: await bcrypt.hash(newPassword, 10),
       },
       { merge: true }
     );
@@ -200,6 +200,7 @@ export const changePasswordHandler = async (
 export const forgotPasswordHandler = async (req: Request, res: Response) => {
   const { email }: ForgotPasswordDto = req.body;
   const userDb = db.collection("user");
+  const forgotPasswordTokenDb = db.collection("forgot_password_token");
   const user = await userDb.where("email", "==", email).get();
 
   if (user.empty) {
@@ -207,6 +208,14 @@ export const forgotPasswordHandler = async (req: Request, res: Response) => {
       .status(404)
       .send({ message: `User with email ${email} is not found` });
   }
+
+  const currentDate = new Date();
+  const expiryDate = currentDate.setMinutes(currentDate.getMinutes() + 15);
+  const tokenData = await forgotPasswordTokenDb.add({
+    expiry: expiryDate,
+    userId: user.docs[0].id,
+    active: true,
+  });
 
   const userData = user.docs[0].data();
   const from = String(process.env.EMAIL_USER);
@@ -240,6 +249,7 @@ export const forgotPasswordHandler = async (req: Request, res: Response) => {
 
   transporter.sendMail(mailData, async function (err: any, _info: any) {
     if (err) {
+      await forgotPasswordTokenDb.doc(tokenData.id).delete();
       return res.status(500).send({
         success: false,
         message: "Email failed to send",
@@ -247,9 +257,48 @@ export const forgotPasswordHandler = async (req: Request, res: Response) => {
     } else {
       return res.status(200).send({
         success: true,
-        message:
-          "Password request success, check your email",
+        message: "Password request success, check your email",
       });
     }
   });
+};
+
+export const verifyForgotPasswordTokenHandler = async (
+  req: Request,
+  res: Response
+) => {
+  const { token }: VerifyForgotPasswordDto = req.body;
+  const forgotPasswordTokenDb = db.collection("forgot_password_token");
+  const userDb = db.collection("user");
+
+  const tokenData = await forgotPasswordTokenDb.doc(token).get();
+
+  if (!tokenData.exists || !tokenData.data()) {
+    return res
+      .status(400)
+      .send({ success: false, message: "Token is not valid" });
+  }
+
+  const userId = tokenData.data()?.userId;
+  const userData = await userDb.doc(userId).get();
+
+  if (!userData.exists) {
+    return res.status(400).send({
+      success: false,
+      message: `User with id ${userId} is not exist`,
+    });
+  }
+
+  if (tokenData.data()?.expiry < Date.now() || !tokenData.data()?.active) {
+    return res.status(400).send({
+      success: false,
+      message: "Token is expired or inactive",
+    });
+  }
+
+  await forgotPasswordTokenDb
+    .doc(tokenData.id)
+    .set({ active: false }, { merge: true });
+
+  return res.status(200).send({ success: true, message: "Token is valid" });
 };

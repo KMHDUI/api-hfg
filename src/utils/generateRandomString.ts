@@ -1,4 +1,4 @@
-const generateRandomPassword = (length: number) => {
+const generateRandomString = (length: number) => {
   const charset =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let result = "";
@@ -11,4 +11,4 @@ const generateRandomPassword = (length: number) => {
   return result;
 };
 
-export default generateRandomPassword;
+export default generateRandomString;
