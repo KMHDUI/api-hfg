@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { db } from "../database/firestore";
 import { AuthRequest } from "../types/types";
 import { RegisterCompetitionDto } from "../dto/competition.dto";
+import { getPaymentUniqueCode } from "../utils/getPaymentUniqueCode";
 
 export const getAllCompetitionHandler = async (
   _req: Request,
@@ -50,9 +51,10 @@ export const registerCompetitionHandler = async (
     .get();
 
   if (!userToCompetition.empty) {
-    return res
-      .status(400)
-      .send({ message: "You already register to this competition!" });
+    return res.status(400).send({
+      message:
+        "You already registered on this competition. Cannot register again!",
+    });
   }
 
   const userDetail = (
@@ -72,10 +74,16 @@ export const registerCompetitionHandler = async (
         competition_type: competition.type,
       });
 
+      const realPrice = 50000;
+      const uniqueCode = getPaymentUniqueCode(realPrice);
+      const totalPayment = realPrice + uniqueCode;
+
       const paymentRef = paymentDb.doc();
       transaction.create(paymentRef, {
         user_to_competition: userToCompetitionRef,
-        total: 50000,
+        payment_total: totalPayment,
+        real_price: realPrice,
+        unique_code: uniqueCode,
         status: "Pending",
         user_fullname: user.fullname,
         competition_name: competition.name,
@@ -92,7 +100,9 @@ export const registerCompetitionHandler = async (
           competition_name: competition.name,
           competition_type: competition.type,
           payment_id: paymentRef.id,
-          payment_total: 50000,
+          payment_total: totalPayment,
+          real_price: realPrice,
+          unique_code: uniqueCode,
         },
       });
     });
