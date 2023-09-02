@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   getAllCompetitionHandler,
+  getMyCompetitionHandler,
   registerCompetitionHandler,
 } from "../services/competition.service";
 import authentication from "../middleware/authencation";
@@ -27,6 +28,23 @@ const competitionRouter = Router();
  *           description: Internal server error.
  */
 competitionRouter.get("/", getAllCompetitionHandler);
+
+/**
+ * @openapi
+ * paths:
+ *   /api/v1/competition/me:
+ *     get:
+ *       tags: [Competition]
+ *       summary: Retrieve competitions associated with the authenticated user.
+ *       responses:
+ *         200:
+ *           description: Successful retrieval of competitions for the authenticated user.
+ *         401:
+ *           description: Unauthorized, user not authenticated.
+ *         500:
+ *           description: Internal server error.
+ */
+competitionRouter.get("/me", authentication, getMyCompetitionHandler);
 
 /**
  * @openapi

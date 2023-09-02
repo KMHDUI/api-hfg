@@ -2,7 +2,7 @@ const getRandomNumber = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
-export const getPaymentUniqueCode = (total: number) => {
+export const getBillingUniqueCode = (total: number) => {
   if (total < 100) return total + getRandomNumber(1, 100);
   let lastThreeDigit = 0;
   let totalTem = total

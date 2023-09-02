@@ -71,6 +71,9 @@ export const registerUserHandler = async (req: Request, res: Response) => {
         password: hashedPassword,
         phone: data.phone,
         status: data.status,
+        is_verified: false,
+        created_at: new Date(),
+        updated_at: new Date(),
       });
 
       const userDetailRef = userDetailDb.doc();
@@ -103,7 +106,7 @@ export const verificationUserHandler = async (
   const userId = req.userId as string;
 
   const userDetailDb = db.collection("user_detail");
-
+  const userDb = db.collection("user");
   const userDetailQuery = await userDetailDb
     .where("user", "==", db.doc(`user/${userId}`))
     .get();
@@ -126,6 +129,10 @@ export const verificationUserHandler = async (
       },
       { merge: true }
     );
+
+    await userDb.doc(userId).set({
+      updated_at: new Date(),
+    });
 
     return res.status(200).send({ message: "Verification successful" });
   } catch (error: any) {
@@ -186,6 +193,7 @@ export const changePasswordHandler = async (
   try {
     await userDb.doc(userId).set(
       {
+        updated_at: new Date(),
         password: await bcrypt.hash(newPassword, 10),
       },
       { merge: true }
@@ -210,11 +218,15 @@ export const forgotPasswordHandler = async (req: Request, res: Response) => {
   }
 
   const currentDate = new Date();
-  const expiryDate = currentDate.setMinutes(currentDate.getMinutes() + 15);
+  const expiryDate = new Date(
+    currentDate.setMinutes(currentDate.getMinutes() + 15)
+  );
   const tokenData = await forgotPasswordTokenDb.add({
     expiry: expiryDate,
     userId: user.docs[0].id,
     active: true,
+    created_at: new Date(),
+    updated_at: new Date(),
   });
 
   const userData = user.docs[0].data();
@@ -251,12 +263,10 @@ export const forgotPasswordHandler = async (req: Request, res: Response) => {
     if (err) {
       await forgotPasswordTokenDb.doc(tokenData.id).delete();
       return res.status(500).send({
-        success: false,
         message: "Email failed to send",
       });
     } else {
       return res.status(200).send({
-        success: true,
         message: "Password request success, check your email",
       });
     }
@@ -274,9 +284,7 @@ export const verifyForgotPasswordTokenHandler = async (
   const tokenData = await forgotPasswordTokenDb.doc(token).get();
 
   if (!tokenData.exists || !tokenData.data()) {
-    return res
-      .status(400)
-      .send({ success: false, message: "Token is not valid" });
+    return res.status(400).send({ message: "Token is not valid" });
   }
 
   const userId = tokenData.data()?.userId;
@@ -284,21 +292,22 @@ export const verifyForgotPasswordTokenHandler = async (
 
   if (!userData.exists) {
     return res.status(400).send({
-      success: false,
       message: `User with id ${userId} is not exist`,
     });
   }
 
   if (tokenData.data()?.expiry < Date.now() || !tokenData.data()?.active) {
     return res.status(400).send({
-      success: false,
       message: "Token is expired or inactive",
     });
   }
 
   await forgotPasswordTokenDb
     .doc(tokenData.id)
-    .set({ active: false }, { merge: true });
+    .set(
+      { active: false, used_at: new Date(), updated_at: new Date() },
+      { merge: true }
+    );
 
   return res.status(200).send({ success: true, message: "Token is valid" });
 };

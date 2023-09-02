@@ -11,7 +11,6 @@ const authentication = async (
 
   if (!authHeader) {
     return res.status(401).send({
-      success: false,
       message: "Missing authorization header. Access denied.",
     });
   }
@@ -29,7 +28,7 @@ const authentication = async (
     String(process.env.JWT_SECRET),
     (err: any, decoded: any) => {
       if (err) {
-        return res.status(403).send({ success: false, message: err.message });
+        return res.status(403).send({ message: err.message });
       }
       req.userId = decoded.id;
       req.email = decoded.email;
