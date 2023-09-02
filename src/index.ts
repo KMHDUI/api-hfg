@@ -10,6 +10,7 @@ import swaggerJSDoc from "swagger-jsdoc";
 import swaggerOptions from "../swagger.json";
 import prodSwaggerOptions from "../swagger-prod.json";
 import swaggerUi from "swagger-ui-express";
+import competitionRouter from "./routes/competition.router";
 
 dotenv.config();
 initializeFirestore();
@@ -32,6 +33,7 @@ app.get("/", (_req: Request, res: Response) => {
 });
 
 app.use("/api/v1/user", userRouter);
+app.use("/api/v1/competition", competitionRouter);
 
 const spec: object = swaggerJSDoc(
   env === "prod" || env === "dev" ? prodSwaggerOptions : swaggerOptions
