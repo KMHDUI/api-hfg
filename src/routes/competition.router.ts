@@ -1,7 +1,9 @@
 import { Router } from "express";
 import {
+  changeMemberStatusHandler,
   getAllCompetitionHandler,
   getMyCompetitionHandler,
+  joinGroupCompetitionByCodeHandler,
   registerCompetitionHandler,
 } from "../services/competition.service";
 import authentication from "../middleware/authencation";
@@ -72,5 +74,73 @@ competitionRouter.get("/me", authentication, getMyCompetitionHandler);
  *           description: Internal server error.
  */
 competitionRouter.post("/register", authentication, registerCompetitionHandler);
+
+/**
+ * @openapi
+ * paths:
+ *   /api/v1/competition/register-by-code:
+ *     post:
+ *       tags: [Competition]
+ *       summary: Register for a competition using a group code.
+ *       security:
+ *         - bearerAuth: []
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/JoinGroupCompetitionByCodeDto'
+ *       responses:
+ *         200:
+ *           description: Registration for the competition using a group code was successful.
+ *         400:
+ *           description: Bad request. Invalid input data.
+ *         401:
+ *           description: Unauthorized. Authentication required.
+ *         500:
+ *           description: Internal server error.
+ */
+competitionRouter.post(
+  "/register-by-code",
+  authentication,
+  joinGroupCompetitionByCodeHandler
+);
+
+/**
+ * @openapi
+ * paths:
+ *   /api/v1/competition/register-by-code/status:
+ *     patch:
+ *       tags: [Competition]
+ *       summary: Change the status of a member in a competition group using a group code.
+ *       security:
+ *         - bearerAuth: []
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ChangeMemberStatusDto'
+ *       responses:
+ *         200:
+ *           description: Member status changed successfully.
+ *         400:
+ *           description: Bad request. Invalid input data.
+ *         401:
+ *           description: Unauthorized. Authentication required.
+ *         500:
+ *           description: Internal server error.
+ */
+competitionRouter.patch(
+  "/register-by-code/status",
+  authentication,
+  changeMemberStatusHandler
+);
+
+competitionRouter.put(
+  "/register-by-code/status",
+  authentication,
+  changeMemberStatusHandler
+);
 
 export default competitionRouter;

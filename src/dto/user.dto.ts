@@ -65,7 +65,7 @@ export interface LoginUserDto {
  *         email: john@example.com
  *         phone: "082147474931"
  *         password: secret123
- *         status: active
+ *         status: Mahasiswa
  *         college: University XYZ
  */
 export interface RegisterUserDto {
