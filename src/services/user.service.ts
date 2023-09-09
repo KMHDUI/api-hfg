@@ -163,6 +163,7 @@ export const getMyProfileHandler = async (req: AuthRequest, res: Response) => {
     phone: user.phone,
     status: user.status,
     college: userDetail.college,
+    is_verified: user.is_verified ?? false,
   };
 
   return res
