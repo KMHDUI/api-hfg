@@ -109,7 +109,7 @@ competitionRouter.post(
 /**
  * @openapi
  * paths:
- *   /api/v1/competition/register-by-code/status:
+ *   /api/v1/competition/member/status:
  *     patch:
  *       tags: [Competition]
  *       summary: Change the status of a member in a competition group using a group code.
@@ -132,13 +132,7 @@ competitionRouter.post(
  *           description: Internal server error.
  */
 competitionRouter.patch(
-  "/register-by-code/status",
-  authentication,
-  changeMemberStatusHandler
-);
-
-competitionRouter.put(
-  "/register-by-code/status",
+  "/member/status",
   authentication,
   changeMemberStatusHandler
 );
