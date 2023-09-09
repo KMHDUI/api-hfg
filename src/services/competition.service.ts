@@ -298,16 +298,14 @@ export const changeMemberStatusHandler = async (
   }
 
   try {
-    await userToCompetitionDb
-      .doc(checkCode.docs[0].id)
-      .set(
-        {
-          status: status,
-          is_active: status === "Accepted" ? true : false,
-          updated_at: new Date(),
-        },
-        { merge: true }
-      );
+    await userToCompetitionDb.doc(checkCode.docs[0].id).set(
+      {
+        status: status,
+        is_active: status === "Accepted" ? true : false,
+        updated_at: new Date(),
+      },
+      { merge: true }
+    );
 
     return res
       .status(200)
@@ -315,4 +313,55 @@ export const changeMemberStatusHandler = async (
   } catch (error: any) {
     res.status(500).send({ message: error.message });
   }
+};
+
+export const getCompetitionDetailHandler = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  const code = req.params.code;
+  const userId = req.userId as string;
+  const userDb = db.collection("user");
+  const userToCompetitionDb = db.collection("user_to_competition");
+
+  const user = (await userDb.doc(userId).get()).data();
+  if (!user) {
+    return res
+      .status(404)
+      .send({ message: `User with id ${userId} is not found` });
+  }
+
+  const competitionDetail = await userToCompetitionDb.doc(code).get();
+  let data = competitionDetail.data();
+  delete data?.is_owner
+
+  if (!competitionDetail.exists && data) {
+    return res.status(400).send({
+      message: "Code is not registered in our system",
+    });
+  }
+
+  if (data?.competition_type === "team") {
+    const members = await userToCompetitionDb
+      .where("id", "==", code)
+      .where("status", "!=", "Deleted")
+      .select(
+        "user_email",
+        "user_fullname",
+        "user_college",
+        "is_active",
+        "status",
+        "is_owner"
+      )
+      .get();
+    const memberList: any[] = [];
+    members.forEach((member) => {
+      memberList.push(member.data());
+    });
+    data.members = memberList;
+  }
+
+  return res
+    .status(200)
+    .send({ message: "Successfully get the competition detail", data: data });
 };

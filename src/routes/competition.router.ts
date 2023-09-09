@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   changeMemberStatusHandler,
   getAllCompetitionHandler,
+  getCompetitionDetailHandler,
   getMyCompetitionHandler,
   joinGroupCompetitionByCodeHandler,
   registerCompetitionHandler,
@@ -136,5 +137,33 @@ competitionRouter.patch(
   authentication,
   changeMemberStatusHandler
 );
+
+/**
+ * @openapi
+ * paths:
+ *   /api/v1/competition/{code}:
+ *     get:
+ *       tags: [Competition]
+ *       summary: Retrieve details for a competition by its code.
+ *       security:
+ *         - bearerAuth: []
+ *       parameters:
+ *         - in: path
+ *           name: code
+ *           schema:
+ *             type: string
+ *           required: true
+ *           description: The code of the competition to retrieve details for.
+ *       responses:
+ *         200:
+ *           description: Successful retrieval of competition details.
+ *         400:
+ *           description: Bad request. Invalid input data.
+ *         401:
+ *           description: Unauthorized. Authentication required.
+ *         500:
+ *           description: Internal server error.
+ */
+competitionRouter.get("/:code", authentication, getCompetitionDetailHandler);
 
 export default competitionRouter;
