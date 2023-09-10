@@ -11,6 +11,7 @@ import bcrypt from "bcrypt";
 import generateJwtToken from "../utils/generateJwtToken";
 import { AuthRequest } from "../types/types";
 import transporter from "../config/mailer";
+import generateRandomString from "../utils/generateRandomString";
 
 export const loginUserHandler = async (req: Request, res: Response) => {
   const { email, password }: LoginUserDto = req.body;
@@ -209,7 +210,7 @@ export const changePasswordHandler = async (
 export const forgotPasswordHandler = async (req: Request, res: Response) => {
   const { email }: ForgotPasswordDto = req.body;
   const userDb = db.collection("user");
-  const forgotPasswordTokenDb = db.collection("forgot_password_token");
+  // const forgotPasswordTokenDb = db.collection("forgot_password_token");
   const user = await userDb.where("email", "==", email).get();
 
   if (user.empty) {
@@ -219,16 +220,19 @@ export const forgotPasswordHandler = async (req: Request, res: Response) => {
   }
 
   const currentDate = new Date();
-  const expiryDate = new Date(
-    currentDate.setMinutes(currentDate.getMinutes() + 15)
-  );
-  const tokenData = await forgotPasswordTokenDb.add({
-    expiry: expiryDate,
-    userId: user.docs[0].id,
-    active: true,
-    created_at: new Date(),
-    updated_at: new Date(),
-  });
+  // const expiryDate = new Date(
+  //   currentDate.setMinutes(currentDate.getMinutes() + 15)
+  // );
+  // const tokenData = await forgotPasswordTokenDb.add({
+  //   expiry: expiryDate,
+  //   userId: user.docs[0].id,
+  //   active: true,
+  //   created_at: new Date(),
+  //   updated_at: new Date(),
+  // });
+
+  const newPassword = generateRandomString(8);
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
 
   const userData = user.docs[0].data();
   const from = String(process.env.EMAIL_USER);
@@ -238,38 +242,86 @@ export const forgotPasswordHandler = async (req: Request, res: Response) => {
     subject: `Change Password for HFG UI Account`,
     html: `
     <html>
-      <body>
-        <div style="width: 100%; display:block;">
-          <h2>Reset Password</h2>
-          <p style="font-size:16px; margin-bottom:10px">
-            <strong>Hi ${userData.nickname}!</strong><br>
-            A password change has been requested for your account. If this was you, please use the link below to reset your password<br>
-          </p>
-          <a href="/" style="display:inline-block;text-decoration:none;background:#10a37f;border-radius:3px;color:white;font-family:Helvetica,sans-serif;font-size:16px;line-height:24px;font-weight:400;padding:12px 20px 11px;margin:0px; margin-bottom:10px" target="_blank" data-saferedirecturl="/">
-            <span>Reset Password</span>        
-          </a>
-          <p style="font-size:16px;margin:0;margin-bottom:10px">
-            If you did not make this request, your email address may have been entered by mistake and you can safely disregard this email. Visit your account settings page on HFG UI to update your information.
-          </p>
-          <p style="font-size:16px;margin:0">
-            Thank you!<br>
-            The HFG UI Team
-          </p>
+    <head>
+        <style>
+            body {
+                font-family: Arial, Helvetica, sans-serif;
+                margin: 0;
+                padding: 0;
+                background-color: #f4f4f4;
+            }
+    
+            .container {
+                padding: 20px;
+                background-color: #fff;
+            }
+    
+            h2 {
+                color: #333;
+            }
+    
+            p {
+                font-size: 16px;
+                color: #555;
+                line-height: 1.6;
+                margin: 0;
+                margin-bottom: 10px;
+            }
+    
+            strong {
+                color: #333;
+            }
+    
+            .footer {
+                margin-top: 20px;
+                text-align: center;
+                font-size: 14px;
+                color: #888;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>Reset Password</h2>
+            <p>
+                <strong>Hi ${userData.nickname}!</strong><br>
+                A password change has been requested for your account. Your new password is <strong>${newPassword}</strong>.
+            </p>
+            <p>
+                If you did not make this request, your email address may have been entered by mistake. Please contact our admin at <a href="mailto:${process.env.EMAIL_USER}">${process.env.EMAIL_USER}</a>.
+            </p>
+            <p>
+                Thank you!<br>
+                The HFG UI Team
+            </p>
+            <div class="footer">
+                This email was sent from an automated system. Please do not reply to this email.
+            </div>
         </div>
-      </body>
-    </html>`,
+    </body>
+    </html>`
   };
 
   transporter.sendMail(mailData, async function (err: any, _info: any) {
     if (err) {
-      await forgotPasswordTokenDb.doc(tokenData.id).delete();
+      // await forgotPasswordTokenDb.doc(tokenData.id).delete();
       return res.status(500).send({
         message: "Email failed to send",
       });
     } else {
-      return res.status(200).send({
-        message: "Password request success, check your email",
-      });
+      try {
+        await userDb
+          .doc(user.docs[0].id)
+          .set(
+            { password: hashedPassword, updated_at: new Date() },
+            { merge: true }
+          );
+        return res.status(200).send({
+          message: "Password request success, check your email",
+        });
+      } catch (error: any) {
+        return res.status(500).send({ message: error.message });
+      }
     }
   });
 };
