@@ -12,6 +12,7 @@ import prodSwaggerOptions from "../swagger-prod.json";
 import swaggerUi from "swagger-ui-express";
 import competitionRouter from "./routes/competition.router";
 import paymentRouter from "./routes/payment.router";
+import uploadFileRouter from "./routes/uploadFile.router";
 
 dotenv.config();
 initializeFirestore();
@@ -36,6 +37,7 @@ app.get("/", (_req: Request, res: Response) => {
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/competition", competitionRouter);
 app.use("/api/v1/payment", paymentRouter);
+app.use("/api/v1/upload", uploadFileRouter);
 
 const spec: object = swaggerJSDoc(
   env === "prod" || env === "dev" ? prodSwaggerOptions : swaggerOptions
