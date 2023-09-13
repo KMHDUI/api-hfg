@@ -7,6 +7,7 @@ export const paymentHandler = async (req: AuthRequest, res: Response) => {
   const userId = req.userId as string;
   const { billId, imageUrl }: PaymentDto = req.body;
   const userDb = db.collection("user");
+  const userToCompetitionDb = db.collection("user_to_competition");
   const billDb = db.collection("bill");
   const paymentDb = db.collection("payment");
 
@@ -25,7 +26,7 @@ export const paymentHandler = async (req: AuthRequest, res: Response) => {
   }
 
   const prevPayment = await paymentDb
-    .where("billing", "==", billDb.doc(billId))
+    .where("bill", "==", billDb.doc(billId))
     .where("status", "==", "Pending")
     .get();
 
@@ -39,7 +40,7 @@ export const paymentHandler = async (req: AuthRequest, res: Response) => {
 
   try {
     const payment = await paymentDb.add({
-      billing: billDb.doc(billId),
+      bill: billDb.doc(billId),
       user: userDb.doc(userId),
       user_fullname: user.fullname,
       image_url: imageUrl,
@@ -48,11 +49,22 @@ export const paymentHandler = async (req: AuthRequest, res: Response) => {
       updated_at: new Date(),
     });
 
+    await billDb
+      .doc(billId)
+      .set({ status: "Pending", updated_at: new Date() }, { merge: true });
+
+    await userToCompetitionDb
+      .doc(bill.user_to_competition.id)
+      .set(
+        { payment_status: "Pending", updated_at: new Date() },
+        { merge: true }
+      );
+
     return res.status(200).send({
       message: "Successfully send the payment. Please wait admin verification",
       data: {
         payment_id: payment.id,
-        billing_id: billId,
+        bill_id: billId,
         total_payment: bill.bill_total,
       },
     });
@@ -66,6 +78,8 @@ export const cancelPaymentHandler = async (req: AuthRequest, res: Response) => {
   const { paymentId }: CancelPaymentDto = req.body;
   const userDb = db.collection("user");
   const paymentDb = db.collection("payment");
+  const billDb = db.collection("bill");
+  const userToCompetitionDb = db.collection("user_to_competition");
 
   const user = (await userDb.doc(userId).get()).data();
   if (!user) {
@@ -89,8 +103,28 @@ export const cancelPaymentHandler = async (req: AuthRequest, res: Response) => {
     });
   }
 
+  const bill = await billDb.doc(payment.bill.id).get();
+  const billingData = bill.data();
+  if (!bill.exists || !billingData) {
+    return res.status(400).send({ message: "Billing is not exist" });
+  }
+
   try {
-    await paymentDb.doc(paymentId).set({ status: "Cancel" }, { merge: true });
+    await paymentDb
+      .doc(paymentId)
+      .set({ status: "Cancel", updated_at: new Date() }, { merge: true });
+
+    await billDb
+      .doc(payment.bill.id)
+      .set({ status: "Cancel", updated_at: new Date() }, { merge: true });
+
+    await userToCompetitionDb
+      .doc(billingData.user_to_competition.id)
+      .set(
+        { payment_status: "Cancel", updated_at: new Date() },
+        { merge: true }
+      );
+
     return res.status(200).send({
       message: "Payment is already cancelled",
       data: {

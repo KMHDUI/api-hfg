@@ -31,6 +31,7 @@ export const getMyCompetitionHandler = async (
   const userId = req.userId as string;
   const userDb = db.collection("user");
   const userToCompetitionDb = db.collection("user_to_competition");
+  const billDb = db.collection("bill");
 
   const user = (await userDb.doc(userId).get()).data();
   if (!user) {
@@ -44,8 +45,18 @@ export const getMyCompetitionHandler = async (
     .get();
   const competitionList: FirebaseFirestore.DocumentData[] = [];
 
-  competitions.forEach((competition) => {
+  for (const competition of competitions.docs) {
     const data = competition.data();
+    const bill = (
+      await billDb
+        .where(
+          "user_to_competition",
+          "==",
+          userToCompetitionDb.doc(competition.id)
+        )
+        .select("real_price", "bill_total", "unique_code", "status")
+        .get()
+    ).docs[0];
     const competitionData = {
       code: data.id,
       type: data.competition_type,
@@ -56,14 +67,18 @@ export const getMyCompetitionHandler = async (
       payment_status: data.payment_status,
       created_at: data.created_at,
       updated_at: data.updated_at,
+      bill: { ...bill.data(), id: bill.id },
     } as any;
 
-    if (data.using_submission) {
+    if (
+      data.competition_using_submission &&
+      data.submission_status === "Submitted"
+    ) {
       competitionData.url = data.url;
     }
 
     competitionList.push(competitionData);
-  });
+  }
 
   return res.status(200).send({
     message: "List of your competition already returned",
@@ -350,6 +365,7 @@ export const getCompetitionDetailHandler = async (
   const userId = req.userId as string;
   const userDb = db.collection("user");
   const userToCompetitionDb = db.collection("user_to_competition");
+  const billDb = db.collection("bill");
 
   const user = (await userDb.doc(userId).get()).data();
   if (!user) {
@@ -358,13 +374,23 @@ export const getCompetitionDetailHandler = async (
       .send({ message: `User with id ${userId} is not found` });
   }
 
+  const bill = (
+    await billDb
+      .where("user_to_competition", "==", userToCompetitionDb.doc(code))
+      .select("real_price", "bill_total", "unique_code", "status")
+      .get()
+  ).docs[0];
+  const billData = bill.data();
+
   const competitionDetail = await userToCompetitionDb.doc(code).get();
-  let data = competitionDetail.data();
+  let data = competitionDetail.data() as any;
   delete data?.is_owner;
   delete data?.user_college;
   delete data?.user_email;
   delete data?.user_fullname;
   delete data?.user;
+
+  data.bill = { ...billData, id: bill.id };
 
   if (!competitionDetail.exists && data) {
     return res.status(400).send({
