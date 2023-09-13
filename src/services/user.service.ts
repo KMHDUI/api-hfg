@@ -131,9 +131,12 @@ export const verificationUserHandler = async (
       { merge: true }
     );
 
-    await userDb.doc(userId).set({
-      updated_at: new Date(),
-    });
+    await userDb.doc(userId).set(
+      {
+        updated_at: new Date(),
+      },
+      { merge: true }
+    );
 
     return res.status(200).send({ message: "Verification successful" });
   } catch (error: any) {
@@ -299,7 +302,7 @@ export const forgotPasswordHandler = async (req: Request, res: Response) => {
             </div>
         </div>
     </body>
-    </html>`
+    </html>`,
   };
 
   transporter.sendMail(mailData, async function (err: any, _info: any) {
