@@ -5,6 +5,7 @@ import {
   ChangeMemberStatusDto,
   JoinGroupCompetitionByCodeDto,
   RegisterCompetitionDto,
+  SubmitSubmissionDto,
 } from "../dto/competition.dto";
 import { getBillingUniqueCode } from "../utils/getBillingUniqueCode";
 
@@ -50,6 +51,11 @@ export const getMyCompetitionHandler = async (
       type: data.competition_type,
       name: data.competition_name,
       is_active: data.is_active,
+      competition_using_submission: data.competition_using_submission,
+      submission_status: data.submission_status,
+      payment_status: data.payment_status,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
     });
   });
 
@@ -114,8 +120,12 @@ export const registerCompetitionHandler = async (
         competition: competitionDb.doc(competitionId),
         competition_name: competition.name,
         competition_type: competition.type,
-        status: "Not Submitted",
-        is_active: false,
+        competition_using_submission: competition.using_submission,
+        submission_status: competition.using_submission
+          ? "Not Submitted"
+          : "Without Submission",
+        payment_status: "Not Paid",
+        is_active: true,
         created_at: new Date(),
         updated_at: new Date(),
       });
@@ -154,12 +164,16 @@ export const registerCompetitionHandler = async (
           competition_id: competitionId,
           competition_name: competition.name,
           competition_type: competition.type,
+          competition_using_submission: competition.using_submission,
+          submission_status: competition.using_submission
+            ? "Not Submitted"
+            : "Without Submission",
           bill_id: billRef.id,
           bill_total: totalBill,
           real_price: realPrice,
           unique_code: uniqueCode,
-          status: "Not Paid",
-          is_active: false,
+          payment_status: "Not Paid",
+          is_active: true,
         },
       });
     });
@@ -234,7 +248,11 @@ export const joinGroupCompetitionByCodeHandler = async (
         competition: competitionDb.doc(competitionId),
         competition_name: competition.name,
         competition_type: competition.type,
-        status: "Pending",
+        competition_using_submission: competition.using_submission,
+        submission_status: competition.using_submission
+          ? "Not Submitted"
+          : "Without Submission",
+        acceptance_status: "Pending",
         is_active: false,
         created_at: new Date(),
         updated_at: new Date(),
@@ -252,7 +270,11 @@ export const joinGroupCompetitionByCodeHandler = async (
           competition_id: competitionId,
           competition_name: competition.name,
           competition_type: competition.type,
-          status: "Pending",
+          competition_using_submission: competition.using_submission,
+          submission_status: competition.using_submission
+            ? "Not Submitted"
+            : "Without Submission",
+          acceptance_status: "Pending",
           is_active: false,
         },
       });
@@ -300,7 +322,7 @@ export const changeMemberStatusHandler = async (
   try {
     await userToCompetitionDb.doc(checkCode.docs[0].id).set(
       {
-        status: status,
+        acceptance_status: status,
         is_active: status === "Accepted" ? true : false,
         updated_at: new Date(),
       },
@@ -333,7 +355,11 @@ export const getCompetitionDetailHandler = async (
 
   const competitionDetail = await userToCompetitionDb.doc(code).get();
   let data = competitionDetail.data();
-  delete data?.is_owner
+  delete data?.is_owner;
+  delete data?.user_college;
+  delete data?.user_email;
+  delete data?.user_fullname;
+  delete data?.user;
 
   if (!competitionDetail.exists && data) {
     return res.status(400).send({
@@ -350,7 +376,7 @@ export const getCompetitionDetailHandler = async (
         "user_fullname",
         "user_college",
         "is_active",
-        "status",
+        "acceptance_status",
         "is_owner"
       )
       .get();
@@ -364,4 +390,57 @@ export const getCompetitionDetailHandler = async (
   return res
     .status(200)
     .send({ message: "Successfully get the competition detail", data: data });
+};
+
+export const submitSubmissionHandler = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  let userId = req.userId as string;
+  const { code, url }: SubmitSubmissionDto = req.body;
+
+  const userDb = db.collection("user");
+  const userToCompetitionDb = db.collection("user_to_competition");
+
+  const user = (await userDb.doc(userId).get()).data();
+  if (!user) {
+    return res
+      .status(404)
+      .send({ message: `User with id ${userId} is not found` });
+  }
+
+  const competitionDetail = await userToCompetitionDb.doc(code).get();
+  let data = competitionDetail.data();
+
+  if (!competitionDetail.exists && data) {
+    return res.status(400).send({
+      message: "Code is not registered in our system",
+    });
+  }
+
+  if (!data?.competition_using_submission) {
+    return res
+      .status(400)
+      .send({ message: "This competition is not using submission" });
+  }
+
+  try {
+    await userToCompetitionDb.doc(code).set(
+      {
+        url: url,
+        submission_status: "Submitted",
+        updated_at: new Date(),
+      },
+      { merge: true }
+    );
+
+    return res
+      .status(200)
+      .send({
+        message: "Succesfully submit the item",
+        data: { url: url, code: code, submission_statu: "Submitted" },
+      });
+  } catch (error: any) {
+    return res.status(500).send({ message: error.message });
+  }
 };

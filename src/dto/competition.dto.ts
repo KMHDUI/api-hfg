@@ -76,3 +76,28 @@ export interface ChangeMemberStatusDto {
   memberId: string;
   status: "Deleted" | "Accepted" | "Rejected";
 }
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     SubmitSubmissionDto:
+ *       type: object
+ *       properties:
+ *         code:
+ *           type: string
+ *           description: The code associated with the submission.
+ *         url:
+ *           type: string
+ *           description: The URL associated with the submission.
+ *       required:
+ *         - code
+ *         - url
+ *       example:
+ *         code: "SUB123"
+ *         url: "https://example.com/submission"
+ */
+export interface SubmitSubmissionDto {
+  code: string;
+  url: string;
+}
