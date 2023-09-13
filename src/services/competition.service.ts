@@ -32,6 +32,7 @@ export const getMyCompetitionHandler = async (
   const userDb = db.collection("user");
   const userToCompetitionDb = db.collection("user_to_competition");
   const billDb = db.collection("bill");
+  const paymentDb = db.collection("payment");
 
   const user = (await userDb.doc(userId).get()).data();
   if (!user) {
@@ -57,6 +58,11 @@ export const getMyCompetitionHandler = async (
         .select("real_price", "bill_total", "unique_code", "status")
         .get()
     ).docs[0];
+    const payments = await paymentDb
+      .where("bill", "==", billDb.doc(bill.id))
+      .select("created_at", "updated_at", "image_url", "status")
+      .orderBy("updated_at", "desc")
+      .get();
     const competitionData = {
       code: data.id,
       type: data.competition_type,
@@ -68,6 +74,9 @@ export const getMyCompetitionHandler = async (
       created_at: data.created_at,
       updated_at: data.updated_at,
       bill: { ...bill.data(), id: bill.id },
+      payments: payments.docs.map((payment) => {
+        return { ...payment.data(), id: payment.id };
+      }),
     } as any;
 
     if (
@@ -366,6 +375,7 @@ export const getCompetitionDetailHandler = async (
   const userDb = db.collection("user");
   const userToCompetitionDb = db.collection("user_to_competition");
   const billDb = db.collection("bill");
+  const paymentDb = db.collection("payment");
 
   const user = (await userDb.doc(userId).get()).data();
   if (!user) {
@@ -382,6 +392,12 @@ export const getCompetitionDetailHandler = async (
   ).docs[0];
   const billData = bill.data();
 
+  const payments = await paymentDb
+    .where("bill", "==", billDb.doc(bill.id))
+    .select("created_at", "updated_at", "image_url", "status")
+    .orderBy("updated_at", "desc")
+    .get();
+
   const competitionDetail = await userToCompetitionDb.doc(code).get();
   let data = competitionDetail.data() as any;
   delete data?.is_owner;
@@ -391,6 +407,9 @@ export const getCompetitionDetailHandler = async (
   delete data?.user;
 
   data.bill = { ...billData, id: bill.id };
+  data.payments = payments.docs.map((payment) => {
+    return { ...payment.data(), id: payment.id };
+  });
 
   if (!competitionDetail.exists && data) {
     return res.status(400).send({
