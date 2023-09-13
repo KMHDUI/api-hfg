@@ -6,6 +6,7 @@ import {
   getMyCompetitionHandler,
   joinGroupCompetitionByCodeHandler,
   registerCompetitionHandler,
+  submitSubmissionHandler,
 } from "../services/competition.service";
 import authentication from "../middleware/authencation";
 
@@ -106,6 +107,33 @@ competitionRouter.post(
   authentication,
   joinGroupCompetitionByCodeHandler
 );
+
+/**
+ * @openapi
+ * paths:
+ *   /api/v1/competition/submit:
+ *     post:
+ *       tags: [Competition]
+ *       summary: Submit a competition entry.
+ *       security:
+ *         - bearerAuth: []
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SubmitSubmissionDto'
+ *       responses:
+ *         200:
+ *           description: Submission was successful.
+ *         400:
+ *           description: Bad request. Invalid input data.
+ *         401:
+ *           description: Unauthorized. Authentication required.
+ *         500:
+ *           description: Internal server error.
+ */
+competitionRouter.post("/submit", authentication, submitSubmissionHandler);
 
 /**
  * @openapi

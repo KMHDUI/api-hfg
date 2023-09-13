@@ -46,7 +46,7 @@ export const getMyCompetitionHandler = async (
 
   competitions.forEach((competition) => {
     const data = competition.data();
-    competitionList.push({
+    const competitionData = {
       code: data.id,
       type: data.competition_type,
       name: data.competition_name,
@@ -56,7 +56,13 @@ export const getMyCompetitionHandler = async (
       payment_status: data.payment_status,
       created_at: data.created_at,
       updated_at: data.updated_at,
-    });
+    } as any;
+
+    if (data.using_submission) {
+      competitionData.url = data.url;
+    }
+
+    competitionList.push(competitionData);
   });
 
   return res.status(200).send({
@@ -110,7 +116,7 @@ export const registerCompetitionHandler = async (
   try {
     await db.runTransaction(async (transaction) => {
       const userToCompetitionRef = userToCompetitionDb.doc();
-      transaction.create(userToCompetitionRef, {
+      const insertedData = {
         id: userToCompetitionRef.id,
         is_owner: true,
         user: userDb.doc(userId),
@@ -121,14 +127,17 @@ export const registerCompetitionHandler = async (
         competition_name: competition.name,
         competition_type: competition.type,
         competition_using_submission: competition.using_submission,
-        submission_status: competition.using_submission
-          ? "Not Submitted"
-          : "Without Submission",
         payment_status: "Not Paid",
         is_active: true,
         created_at: new Date(),
         updated_at: new Date(),
-      });
+      } as any;
+
+      if (competition.using_submission) {
+        insertedData.submission_status = "Not Submitted";
+      }
+
+      transaction.create(userToCompetitionRef, insertedData);
 
       const realPrice = 50000;
       const uniqueCode = getBillingUniqueCode(realPrice);
@@ -165,9 +174,6 @@ export const registerCompetitionHandler = async (
           competition_name: competition.name,
           competition_type: competition.type,
           competition_using_submission: competition.using_submission,
-          submission_status: competition.using_submission
-            ? "Not Submitted"
-            : "Without Submission",
           bill_id: billRef.id,
           bill_total: totalBill,
           real_price: realPrice,
@@ -238,7 +244,7 @@ export const joinGroupCompetitionByCodeHandler = async (
   try {
     await db.runTransaction(async (transaction) => {
       const userToCompetitionRef = userToCompetitionDb.doc();
-      transaction.create(userToCompetitionRef, {
+      const insertedData = {
         id: code,
         is_owner: false,
         user: userDb.doc(userId),
@@ -249,14 +255,16 @@ export const joinGroupCompetitionByCodeHandler = async (
         competition_name: competition.name,
         competition_type: competition.type,
         competition_using_submission: competition.using_submission,
-        submission_status: competition.using_submission
-          ? "Not Submitted"
-          : "Without Submission",
         acceptance_status: "Pending",
         is_active: false,
         created_at: new Date(),
         updated_at: new Date(),
-      });
+      } as any;
+      if (competition.using_submission) {
+        insertedData.submission_status = "Not Submitted";
+      }
+
+      transaction.create(userToCompetitionRef, insertedData);
 
       return res.status(200).send({
         message: "Successfully register the competition",
@@ -271,9 +279,6 @@ export const joinGroupCompetitionByCodeHandler = async (
           competition_name: competition.name,
           competition_type: competition.type,
           competition_using_submission: competition.using_submission,
-          submission_status: competition.using_submission
-            ? "Not Submitted"
-            : "Without Submission",
           acceptance_status: "Pending",
           is_active: false,
         },
@@ -434,12 +439,10 @@ export const submitSubmissionHandler = async (
       { merge: true }
     );
 
-    return res
-      .status(200)
-      .send({
-        message: "Succesfully submit the item",
-        data: { url: url, code: code, submission_statu: "Submitted" },
-      });
+    return res.status(200).send({
+      message: "Succesfully submit the item",
+      data: { url: url, code: code, submission_status: "Submitted" },
+    });
   } catch (error: any) {
     return res.status(500).send({ message: error.message });
   }
