@@ -5,6 +5,7 @@ import {
   LoginUserDto,
   RegisterUserDto,
   VerifyForgotPasswordDto,
+  VerifyUserDto,
 } from "../dto/user.dto";
 import { db } from "../database/firestore";
 import bcrypt from "bcrypt";
@@ -366,4 +367,52 @@ export const verifyForgotPasswordTokenHandler = async (
     );
 
   return res.status(200).send({ success: true, message: "Token is valid" });
+};
+
+export const getAllUserHandler = async (_req: Request, res: Response) => {
+  const userDb = db.collection("user");
+  const userDetailDb = db.collection("user_detail");
+
+  const users = await userDb.get();
+  const usersData = [];
+
+  for (const user of users.docs) {
+    let insertedData = { ...user.data() } as any;
+    insertedData.id = user.id;
+
+    const userDetail = await userDetailDb
+      .where("user", "==", userDb.doc(user.id))
+      .get();
+
+    const userDetailData = userDetail.docs[0].data();
+    console.log(userDetailData);
+    insertedData = { ...insertedData, ...userDetailData };
+
+    delete insertedData.user;
+    delete insertedData.password;
+    usersData.push(insertedData);
+  }
+
+  return res
+    .status(200)
+    .send({ message: "Successfully get the user data", data: usersData });
+};
+
+export const verifyUserHandler = async (req: Request, res: Response) => {
+  const { id }: VerifyUserDto = req.body;
+  const userDb = db.collection("user");
+  const user = await userDb.doc(id).get();
+
+  if (!user.exists) {
+    return res.status(404).send({ message: `User with id ${id} is not found` });
+  }
+
+  try {
+    await userDb
+      .doc(id)
+      .set({ is_verified: true, updated_at: new Date() }, { merge: true });
+    return res.status(200).send({ message: "Verification success" });
+  } catch (error: any) {
+    return res.status(400).send({ message: error.message });
+  }
 };

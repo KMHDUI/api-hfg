@@ -192,3 +192,7 @@ export interface ForgotPasswordDto {
 export interface VerifyForgotPasswordDto {
   token: string;
 }
+
+export interface VerifyUserDto {
+  id: string;
+}

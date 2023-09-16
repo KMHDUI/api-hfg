@@ -2,11 +2,13 @@ import { Router } from "express";
 import {
   changePasswordHandler,
   forgotPasswordHandler,
+  getAllUserHandler,
   getMyProfileHandler,
   loginUserHandler,
   registerUserHandler,
   verificationUserHandler,
   verifyForgotPasswordTokenHandler,
+  verifyUserHandler,
 } from "../services/user.service";
 import authentication from "../middleware/authencation";
 
@@ -158,5 +160,9 @@ userRouter.post("/forgot-password", forgotPasswordHandler);
  *           description: Token not found or expired.
  */
 userRouter.post("/forgot-password/verify", verifyForgotPasswordTokenHandler);
+
+userRouter.get("/all", getAllUserHandler);
+
+userRouter.post("/verify/accept", verifyUserHandler);
 
 export default userRouter;
