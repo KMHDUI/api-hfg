@@ -420,7 +420,19 @@ export const getCompetitionDetailHandler = async (
   if (data?.competition_type === "team") {
     const members = await userToCompetitionDb
       .where("id", "==", code)
-      .where("acceptance_status", "in", ['Accepted', 'Pending'])
+      .where("acceptance_status", "in", ["Accepted", "Pending"])
+      .select(
+        "user_email",
+        "user_fullname",
+        "user_college",
+        "is_active",
+        "acceptance_status",
+        "is_owner"
+      )
+      .get();
+    const owner = await userToCompetitionDb
+      .where("id", "==", code)
+      .where("is_owner", "==", true)
       .select(
         "user_email",
         "user_fullname",
@@ -431,6 +443,7 @@ export const getCompetitionDetailHandler = async (
       )
       .get();
     const memberList: any[] = [];
+    memberList.push(owner.docs[0].data());
     members.forEach((member) => {
       memberList.push(member.data());
     });
