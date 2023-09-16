@@ -13,14 +13,13 @@
  *           description: The URL to the bill's image.
  *       required:
  *         - billId
- *         - imageUrl
  *       example:
  *         billId: "BILL123"
  *         imageUrl: "https://example.com/bill-image.jpg"
  */
 export interface PaymentDto {
   billId: string;
-  imageUrl: string;
+  imageUrl?: string;
 }
 
 /**

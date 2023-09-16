@@ -420,7 +420,7 @@ export const getCompetitionDetailHandler = async (
   if (data?.competition_type === "team") {
     const members = await userToCompetitionDb
       .where("id", "==", code)
-      .where("status", "!=", "Deleted")
+      .where("acceptance_status", "in", ['Accepted', 'Pending'])
       .select(
         "user_email",
         "user_fullname",
