@@ -163,7 +163,7 @@ export const registerCompetitionHandler = async (
 
       transaction.create(userToCompetitionRef, insertedData);
 
-      const realPrice = 50000;
+      const realPrice = competition.price;
       const uniqueCode = getBillingUniqueCode(realPrice);
       const totalBill = realPrice + uniqueCode;
 
@@ -504,4 +504,61 @@ export const submitSubmissionHandler = async (
   } catch (error: any) {
     return res.status(500).send({ message: error.message });
   }
+};
+
+export const getAllRegistrationHandler = async (
+  _req: Request,
+  res: Response
+) => {
+  const userToCompetitionDb = db.collection("user_to_competition");
+  const userToCompetition = await userToCompetitionDb
+    .where("is_owner", "==", true)
+    .orderBy("created_at", "desc")
+    .select(
+      "competition_name",
+      "competition_type",
+      "competition_using_type",
+      "created_at",
+      "is_active",
+      "id",
+      "user_college",
+      "user_email",
+      "user_fullname",
+      "payment_status",
+      "submission_status",
+      "url"
+    )
+    .get();
+
+  const data = [];
+  for (const registration of userToCompetition.docs) {
+    const registrationData = registration.data();
+    if (registrationData.competition_type === "team") {
+      const code = registration.id;
+      const members = await userToCompetitionDb
+        .where("id", "==", code)
+        .where("is_owner", "==", false)
+        .orderBy("created_at", "desc")
+        .select(
+          "acceptance_status",
+          "user_fullname",
+          "user_email",
+          "created_at",
+          "is_active"
+        )
+        .get();
+      const memberList: FirebaseFirestore.DocumentData[] = [];
+
+      members.forEach((member) => memberList.push(member.data()));
+
+      data.push({ ...registrationData, id: code, member: memberList });
+    } else {
+      const code = registration.id;
+      data.push({ ...registrationData, id: code });
+    }
+  }
+
+  return res
+    .status(200)
+    .send({ message: "Successfully retrived registration data", data: data });
 };

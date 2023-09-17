@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   changeMemberStatusHandler,
   getAllCompetitionHandler,
+  getAllRegistrationHandler,
   getCompetitionDetailHandler,
   getMyCompetitionHandler,
   joinGroupCompetitionByCodeHandler,
@@ -165,6 +166,8 @@ competitionRouter.patch(
   authentication,
   changeMemberStatusHandler
 );
+
+competitionRouter.get("/all", getAllRegistrationHandler);
 
 /**
  * @openapi

@@ -373,7 +373,7 @@ export const getAllUserHandler = async (_req: Request, res: Response) => {
   const userDb = db.collection("user");
   const userDetailDb = db.collection("user_detail");
 
-  const users = await userDb.get();
+  const users = await userDb.orderBy("created_at", "desc").get();
   const usersData = [];
 
   for (const user of users.docs) {
@@ -385,7 +385,6 @@ export const getAllUserHandler = async (_req: Request, res: Response) => {
       .get();
 
     const userDetailData = userDetail.docs[0].data();
-    console.log(userDetailData);
     insertedData = { ...insertedData, ...userDetailData };
 
     delete insertedData.user;
