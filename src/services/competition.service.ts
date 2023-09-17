@@ -517,7 +517,7 @@ export const getAllRegistrationHandler = async (
     .select(
       "competition_name",
       "competition_type",
-      "competition_using_type",
+      "competition_using_submission",
       "created_at",
       "is_active",
       "id",
