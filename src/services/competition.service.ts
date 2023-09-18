@@ -511,6 +511,9 @@ export const getAllRegistrationHandler = async (
   res: Response
 ) => {
   const userToCompetitionDb = db.collection("user_to_competition");
+  const userDb = db.collection("user");
+  const billDb = db.collection("bill");
+  const paymentDb = db.collection("payment");
   const userToCompetition = await userToCompetitionDb
     .where("is_owner", "==", true)
     .orderBy("created_at", "desc")
@@ -530,9 +533,33 @@ export const getAllRegistrationHandler = async (
     )
     .get();
 
+  const blockedUser = await userDb.where("is_blocked", "==", true).get();
+  const blockedUserData = blockedUser.docs.map(
+    (blocked) => blocked.data().email
+  );
+
   const data = [];
   for (const registration of userToCompetition.docs) {
     const registrationData = registration.data();
+    if (blockedUserData.includes(registrationData.user_email)) {
+      continue;
+    }
+
+    const bill = await billDb
+      .where(
+        "user_to_competition",
+        "==",
+        userToCompetitionDb.doc(registration.id)
+      )
+      .get();
+
+    const billData = bill.docs[0].data();
+    const payment = await paymentDb
+      .where("bill", "==", billDb.doc(bill.docs[0].id))
+      .where("status", "!=", "Rejected")
+      .get();
+    const paymentData = !payment.empty ? payment.docs[0].data() : null;
+
     if (registrationData.competition_type === "team") {
       const code = registration.id;
       const members = await userToCompetitionDb
@@ -551,10 +578,27 @@ export const getAllRegistrationHandler = async (
 
       members.forEach((member) => memberList.push(member.data()));
 
-      data.push({ ...registrationData, id: code, member: memberList });
+      data.push({
+        ...registrationData,
+        id: code,
+        member: memberList,
+        bill: { ...billData, id: bill.docs[0].id },
+        payment: {
+          ...paymentData,
+          id: payment.empty ? null : payment.docs[0].id,
+        },
+      });
     } else {
       const code = registration.id;
-      data.push({ ...registrationData, id: code });
+      data.push({
+        ...registrationData,
+        id: code,
+        bill: { ...billData, id: bill.docs[0].id },
+        payment: {
+          ...paymentData,
+          id: payment.empty ? null : payment.docs[0].id,
+        },
+      });
     }
   }
 

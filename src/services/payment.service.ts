@@ -1,6 +1,10 @@
-import { Response } from "express";
+import { Request, Response } from "express";
 import { AuthRequest } from "../types/types";
-import { CancelPaymentDto, PaymentDto } from "../dto/payment.dto";
+import {
+  CancelPaymentDto,
+  PaymentDto,
+  VerifyPaymentDto,
+} from "../dto/payment.dto";
 import { db } from "../database/firestore";
 
 export const paymentHandler = async (req: AuthRequest, res: Response) => {
@@ -129,6 +133,72 @@ export const cancelPaymentHandler = async (req: AuthRequest, res: Response) => {
       message: "Payment is already cancelled",
       data: {
         payment_id: paymentId,
+      },
+    });
+  } catch (error: any) {
+    return res.status(500).send({ message: error.message });
+  }
+};
+
+export const verifyPayment = async (req: Request, res: Response) => {
+  const { billId, status }: VerifyPaymentDto = req.body;
+  const billDb = db.collection("bill");
+  const paymentDb = db.collection("payment");
+  const userToCompetitionDb = db.collection("user_to_competition");
+
+  const bill = (await billDb.doc(billId).get()).data();
+  if (!bill) {
+    return res.status(400).send({ message: "Billing is not found" });
+  }
+
+  if (bill.status === "Paid" || bill.status === "Not Paid") {
+    return res
+      .status(400)
+      .send({ message: "Not allowed to perform the action" });
+  }
+
+  const prevPayment = await paymentDb
+    .where("bill", "==", billDb.doc(billId))
+    .where("status", "==", "Pending")
+    .get();
+
+  if (prevPayment.empty) {
+    return res.status(400).send({
+      message: "Payment is empty. Try to make payment first",
+      data: prevPayment.docs[0].data(),
+    });
+  }
+
+  try {
+    await paymentDb.doc(prevPayment.docs[0].id).set(
+      {
+        status: status ? "Accepted" : "Rejected",
+        updated_at: new Date(),
+      },
+      { merge: true }
+    );
+
+    await billDb
+      .doc(billId)
+      .set(
+        { status: status ? "Paid" : "Not Paid", updated_at: new Date() },
+        { merge: true }
+      );
+
+    await userToCompetitionDb.doc(bill.user_to_competition.id).set(
+      {
+        payment_status: status ? "Paid" : "Not Paid",
+        updated_at: new Date(),
+      },
+      { merge: true }
+    );
+
+    return res.status(200).send({
+      message: "Successfully change payment status",
+      data: {
+        payment_id: prevPayment.docs[0].id,
+        bill_id: billId,
+        total_payment: bill.bill_total,
       },
     });
   } catch (error: any) {

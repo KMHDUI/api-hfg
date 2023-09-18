@@ -89,6 +89,50 @@ export const registerUserHandler = async (req: Request, res: Response) => {
         email: data.email,
       });
 
+      const from = String(process.env.EMAIL_USER);
+      const mailData = {
+        from: from,
+        to: data.email,
+        subject: `Thank You for Registering`,
+        html: `
+        <html>
+          <body>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center">
+                  <h1>Thank You for Registering!</h1>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>Dear ${data.fullname},</p>
+                  <p>Thank you for registering for the HFG KMHDUI event. We're excited to have you join us!</p>
+                  <p>Before you can access all the event features, we kindly remind you to verify your account on our event website:</p>
+                  <p><a href="https://event.hfg.kmhdui.com/dashboard">Verify Your Account</a></p>
+                  <p>Once your account is verified, you'll have full access to event details, updates, and more.</p>
+                  <p>If you have any questions or need assistance, please feel free to contact our support team at ${from}.</p>
+                  <p>Thank you for being a part of our event!</p>
+                  <p>Best regards,<br>The HFG KMHDUI Team</p>
+                </td>
+              </tr>
+            </table>
+          </body>
+          </html>
+        `,
+      };
+
+      transporter.sendMail(mailData, async function (err: any, _info: any) {
+        if (err) {
+          return res.status(500).send({
+            message: "Email failed to send",
+          });
+        } else {
+          return res.status(200).send({
+            message: "Email has been send",
+          });
+        }
+      });
+
       return res.status(201).send({
         message: "Registration success",
         data: { id: insertedUserRef.id },
@@ -169,6 +213,7 @@ export const getMyProfileHandler = async (req: AuthRequest, res: Response) => {
     status: user.status,
     college: userDetail.college,
     is_verified: user.is_verified ?? false,
+    is_blocked: user.is_blocked ?? false,
   };
 
   return res
@@ -214,7 +259,6 @@ export const changePasswordHandler = async (
 export const forgotPasswordHandler = async (req: Request, res: Response) => {
   const { email }: ForgotPasswordDto = req.body;
   const userDb = db.collection("user");
-  // const forgotPasswordTokenDb = db.collection("forgot_password_token");
   const user = await userDb.where("email", "==", email).get();
 
   if (user.empty) {
@@ -222,18 +266,6 @@ export const forgotPasswordHandler = async (req: Request, res: Response) => {
       .status(404)
       .send({ message: `User with email ${email} is not found` });
   }
-
-  const currentDate = new Date();
-  // const expiryDate = new Date(
-  //   currentDate.setMinutes(currentDate.getMinutes() + 15)
-  // );
-  // const tokenData = await forgotPasswordTokenDb.add({
-  //   expiry: expiryDate,
-  //   userId: user.docs[0].id,
-  //   active: true,
-  //   created_at: new Date(),
-  //   updated_at: new Date(),
-  // });
 
   const newPassword = generateRandomString(8);
   const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -308,7 +340,6 @@ export const forgotPasswordHandler = async (req: Request, res: Response) => {
 
   transporter.sendMail(mailData, async function (err: any, _info: any) {
     if (err) {
-      // await forgotPasswordTokenDb.doc(tokenData.id).delete();
       return res.status(500).send({
         message: "Email failed to send",
       });
@@ -398,7 +429,7 @@ export const getAllUserHandler = async (_req: Request, res: Response) => {
 };
 
 export const verifyUserHandler = async (req: Request, res: Response) => {
-  const { id }: VerifyUserDto = req.body;
+  const { id, status }: VerifyUserDto = req.body;
   const userDb = db.collection("user");
   const user = await userDb.doc(id).get();
 
@@ -407,9 +438,21 @@ export const verifyUserHandler = async (req: Request, res: Response) => {
   }
 
   try {
-    await userDb
-      .doc(id)
-      .set({ is_verified: true, updated_at: new Date() }, { merge: true });
+    if (status < 2) {
+      await userDb
+        .doc(id)
+        .set(
+          { is_verified: status == 1 ? true : false, updated_at: new Date() },
+          { merge: true }
+        );
+    } else {
+      await userDb
+        .doc(id)
+        .set(
+          { is_blocked: status == 2 ? true : false, updated_at: new Date() },
+          { merge: true }
+        );
+    }
     return res.status(200).send({ message: "Verification success" });
   } catch (error: any) {
     return res.status(400).send({ message: error.message });

@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   cancelPaymentHandler,
   paymentHandler,
+  verifyPayment,
 } from "../services/payment.service";
 import authentication from "../middleware/authencation";
 
@@ -58,5 +59,7 @@ paymentRouter.post("/pay", authentication, paymentHandler);
  *           description: Internal server error.
  */
 paymentRouter.post("/cancel", authentication, cancelPaymentHandler);
+
+paymentRouter.post("/verify", verifyPayment);
 
 export default paymentRouter;

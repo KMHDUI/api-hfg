@@ -19,7 +19,7 @@
  */
 export interface PaymentDto {
   billId: string;
-  imageUrl?: string;
+  imageUrl: string;
 }
 
 /**
@@ -38,5 +38,10 @@ export interface PaymentDto {
  *         paymentId: "PAYMENT123"
  */
 export interface CancelPaymentDto {
-    paymentId: string
+  paymentId: string;
+}
+
+export interface VerifyPaymentDto {
+  billId: string;
+  status: 0 | 1;
 }

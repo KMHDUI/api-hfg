@@ -195,4 +195,5 @@ export interface VerifyForgotPasswordDto {
 
 export interface VerifyUserDto {
   id: string;
+  status: number;
 }

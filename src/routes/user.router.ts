@@ -163,6 +163,6 @@ userRouter.post("/forgot-password/verify", verifyForgotPasswordTokenHandler);
 
 userRouter.get("/all", getAllUserHandler);
 
-userRouter.post("/verify/accept", verifyUserHandler);
+userRouter.post("/verify", verifyUserHandler);
 
 export default userRouter;
