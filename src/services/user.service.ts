@@ -26,6 +26,7 @@ export const loginUserHandler = async (req: Request, res: Response) => {
   }
 
   const userData = user.docs[0].data();
+  userData.id = user.docs[0].id
   const isPasswordMatch = await bcrypt.compare(password, userData.password);
 
   if (!isPasswordMatch)
