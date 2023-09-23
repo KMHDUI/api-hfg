@@ -445,7 +445,7 @@ export const getCompetitionDetailHandler = async (
     const memberList: any[] = [];
     memberList.push(owner.docs[0].data());
     members.forEach((member) => {
-      memberList.push(member.data());
+      memberList.push({ ...member.data(), id: member.id });
     });
     data.members = memberList;
     data.code = code;
