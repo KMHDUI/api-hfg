@@ -448,6 +448,7 @@ export const getCompetitionDetailHandler = async (
       memberList.push(member.data());
     });
     data.members = memberList;
+    data.code = code;
   }
 
   return res
