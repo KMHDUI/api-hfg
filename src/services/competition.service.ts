@@ -422,6 +422,7 @@ export const getCompetitionDetailHandler = async (
       .where("id", "==", code)
       .where("acceptance_status", "in", ["Accepted", "Pending"])
       .select(
+        "user",
         "user_email",
         "user_fullname",
         "user_college",
@@ -443,9 +444,12 @@ export const getCompetitionDetailHandler = async (
       )
       .get();
     const memberList: any[] = [];
-    memberList.push(owner.docs[0].data());
+    memberList.push({ ...owner.docs[0].data(), id: userId });
     members.forEach((member) => {
-      memberList.push({ ...member.data(), id: member.id });
+      const id = member.data().user.id;
+      let data = member.data();
+      delete data.user;
+      memberList.push({ ...data, id: id });
     });
     data.members = memberList;
     data.code = code;
