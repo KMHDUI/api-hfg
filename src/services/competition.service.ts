@@ -50,11 +50,7 @@ export const getMyCompetitionHandler = async (
     const data = competition.data();
     const bill = (
       await billDb
-        .where(
-          "user_to_competition",
-          "==",
-          userToCompetitionDb.doc(competition.id)
-        )
+        .where("user_to_competition", "==", userToCompetitionDb.doc(data.id))
         .select("real_price", "bill_total", "unique_code", "status")
         .get()
     ).docs[0];
@@ -435,6 +431,7 @@ export const getCompetitionDetailHandler = async (
       .where("id", "==", code)
       .where("is_owner", "==", true)
       .select(
+        "user",
         "user_email",
         "user_fullname",
         "user_college",
@@ -443,8 +440,12 @@ export const getCompetitionDetailHandler = async (
         "is_owner"
       )
       .get();
+    const ownerId = owner.docs[0].data().user.id;
+    let ownerData = owner.docs[0].data();
+    delete ownerData.user;
+
     const memberList: any[] = [];
-    memberList.push({ ...owner.docs[0].data(), id: userId });
+    memberList.push({ ...ownerData, id: ownerId });
     members.forEach((member) => {
       const id = member.data().user.id;
       let data = member.data();
